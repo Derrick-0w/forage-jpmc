@@ -8,6 +8,8 @@ import './App.css';
  */
 interface IState {
   data: ServerRespond[],
+  // render the graph component only when there is data
+  showGraph: boolean, 
 }
 
 /**
@@ -15,6 +17,8 @@ interface IState {
  * It renders title, button and Graph react element.
  */
 class App extends Component<{}, IState> {
+   // hold the ID of the interval timer
+  private intervalId: NodeJS.Timeout | undefined;
   constructor(props: {}) {
     super(props);
 
@@ -22,6 +26,7 @@ class App extends Component<{}, IState> {
       // data saves the server responds.
       // We use this state to parse data down to the child element (Graph) as element property
       data: [],
+      showGraph: false
     };
   }
 
@@ -29,18 +34,35 @@ class App extends Component<{}, IState> {
    * Render Graph react component with state.data parse as property data
    */
   renderGraph() {
-    return (<Graph data={this.state.data}/>)
+    if (this.state.showGraph == true)
+      return (<Graph data={this.state.data}/>)
   }
 
   /**
    * Get new data from server and update the state with the new data
    */
   getDataFromServer() {
-    DataStreamer.getData((serverResponds: ServerRespond[]) => {
-      // Update the state by creating a new array of data that consists of
-      // Previous data in the state and the new data from server
-      this.setState({ data: [...this.state.data, ...serverResponds] });
-    });
+    // Step 1: Define a function to fetch data from the server
+    const fetchData = () => {
+      // DataStreamer is used to get data from the server
+      DataStreamer.getData((serverResponds: ServerRespond[]) => {
+        this.setState({
+          // Create a new array combining the existing state data with the new server responses
+          data: [...this.state.data, ...serverResponds],
+          // since there is data, show graph
+          showGraph: true,
+        });
+      });
+    };
+    // Step 2: Define the interval duration
+  const intervalDuration = 100; // interval duration in milliseconds
+  this.intervalId = setInterval(fetchData, intervalDuration);
+  }//if component is removed
+  unmountComponent(){
+    //clear the interval to avoid leaks
+    if (this.intervalId){
+      clearInterval(this.intervalId);
+    }
   }
 
   /**
