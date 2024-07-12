@@ -13,8 +13,8 @@ interface IProps {
 /**
  * Perspective library adds load to HTMLElement prototype.
  * This interface acts as a wrapper for Typescript compiler.
- */
-interface PerspectiveViewerElement {
+ */ //make it behave like an HTML element
+interface PerspectiveViewerElement extends HTMLElement{
   load: (table: Table) => void,
 }
 
@@ -32,7 +32,7 @@ class Graph extends Component<IProps, {}> {
 
   componentDidMount() {
     // Get element to attach the table from the DOM.
-    const elem: PerspectiveViewerElement = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+    const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
 
     const schema = {
       stock: 'string',
@@ -47,8 +47,29 @@ class Graph extends Component<IProps, {}> {
     if (this.table) {
       // Load the `table` in the `<perspective-viewer>` DOM reference.
 
-      // Add more Perspective configurations here.
+     
       elem.load(this.table);
+      // Set the view type for the Perspective viewer to a line chart (y_line)
+      elem.setAttribute('view', 'y_line');
+
+      // Set the column pivot to group data by the 'stock' field
+      elem.setAttribute('column-pivots', '["stock"]');
+
+      // Set the row pivot to group data by the 'timestamp' field
+      elem.setAttribute('row-pivots', '["timestamp"]');
+
+      // The columns to display in the Perspective viewer
+      elem.setAttribute('columns', '["top_ask_price"]');
+
+      //aggregate data and handle duplicates
+      elem.setAttribute('aggregates', `{
+        "stock": "distinct count",   
+        "top_ask_price": "avg",
+        "top_bid_price": "avg",
+        "timestamp": "distinct count"}`);
+      
+
+
     }
   }
 
